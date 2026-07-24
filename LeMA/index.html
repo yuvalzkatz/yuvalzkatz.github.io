@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeMA</title>
+<style>
+  :root { font-family: Arial, Helvetica, sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #f4f4f5; color: #18181b;
+         height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header {
+    flex: 0 0 auto;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    padding: 10px 18px; background: #fff; border-bottom: 1px solid #e4e4e7;
+  }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; font-weight: 700; }
+  label { font-size: 13px; font-weight: 600; }
+  input[type="text"] {
+    font-size: 14px; padding: 6px 10px; border: 1px solid #d4d4d8;
+    border-radius: 6px; width: 200px;
+  }
+  button {
+    font-size: 13px; font-weight: 600; padding: 7px 14px; cursor: pointer;
+    border: 1px solid #d4d4d8; border-radius: 6px; background: #fff;
+  }
+  button:hover { background: #f4f4f5; }
+  button.primary { background: #18181b; color: #fff; border-color: #18181b; }
+  button.primary:hover { background: #333; }
+  .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .toggle input { cursor: pointer; }
+  .hint { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 16px;
+          font-size: 12px; color: #71717a; padding: 3px 18px; }
+  .cite { margin-left: auto; font-size: 11px; color: #a1a1aa; }
+  #panelBar { flex: 0 0 auto; padding: 5px 18px; background: #fff; border-bottom: 1px solid #e4e4e7; }
+  .panel-controls { display: flex; align-items: center; gap: 14px; margin-bottom: 5px; font-size: 13px; }
+  .panel-controls strong { font-size: 14px; }
+  .panel-controls label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .panel-controls input[type="number"] { width: 52px; padding: 5px 6px; border: 1px solid #d4d4d8; border-radius: 6px; font-size: 13px; }
+  /* fixed height reserved for one card row, so adding thumbnails never resizes the diagram */
+  #panelStrip { display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; padding: 2px; min-height: 96px; align-items: flex-start; }
+  .card { position: relative; flex: 0 0 auto; width: 118px; border: 1px solid #d4d4d8; border-radius: 8px;
+          padding: 5px; background: #fff; cursor: pointer; }
+  .card:hover { border-color: #a1a1aa; }
+  .card.active { border-color: #18181b; box-shadow: 0 0 0 2px rgba(24,24,27,0.15); }
+  .card .thumb { width: 100%; aspect-ratio: 1280 / 760; background: #fff; border: 1px solid #f0f0f1;
+                 border-radius: 6px; overflow: hidden; }
+  .card .thumb svg { width: 100%; height: 100%; display: block; }
+  .card .cardid { text-align: center; font-size: 12px; font-weight: 700; margin-top: 3px;
+                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .del { position: absolute; top: 1px; right: 4px; border: none; background: transparent;
+               font-size: 17px; line-height: 1; cursor: pointer; color: #a1a1aa; padding: 2px; z-index: 1; }
+  .card .del:hover { color: #e8332a; }
+  .card.new { display: flex; align-items: center; justify-content: center; color: #71717a;
+              font-weight: 600; border-style: dashed; align-self: stretch; min-width: 90px; }
+  .card.new:hover { color: #18181b; border-color: #18181b; }
+  #stage { flex: 1 1 auto; min-height: 0; padding: 4px 12px 8px;
+           display: flex; align-items: center; justify-content: center; }
+  #stage svg { width: auto; height: auto; max-width: 100%; max-height: 100%; display: block;
+        background: #fff; border: 1px solid #e4e4e7; border-radius: 8px; }
+  .clickable { cursor: pointer; }
+  .clickable:hover { filter: brightness(0.96); }
+
+  /* ---- Mobile layout (phones): only applies on narrow screens; the desktop
+         layout above is untouched. Lets the page scroll and the diagram fit the
+         screen width (pinch-zoom to tap small components). ---- */
+  @media (max-width: 768px) {
+    body { height: auto; min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
+    header { padding: 10px 12px; gap: 8px; }
+    header h1 { width: 100%; font-size: 15px; }
+    #subjectId { flex: 1 1 auto; width: auto; }
+    .hint { padding: 6px 12px; }
+    #panelBar { padding: 8px 12px; }
+    #panelStrip { min-height: 0; }
+    #stage { flex: 0 0 auto; padding: 8px 8px 20px; align-items: flex-start; }
+    #stage svg { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>LeMA: Lexical Model Annotator</h1>
+  <label for="subjectId">Patient ID:</label>
+  <input type="text" id="subjectId" placeholder="e.g. 5 or R.Y." autocomplete="off">
+  <label class="toggle"><input type="checkbox" id="phiToggle" checked> Include phonological input</label>
+  <button id="resetBtn">Reset colors</button>
+  <button class="primary" id="exportBtn">Download PNG</button>
+</header>
+<div class="hint">
+  <span>Click any component, sub-component, or arrow to cycle its color (none → red → yellow → green).</span>
+  <span class="cite">Cite as: Katz Y.Z. (2026) <i>LeMA: Lexical Model Annotator</i></span>
+</div>
+<div id="panelBar">
+  <div class="panel-controls">
+    <strong>Panel</strong>
+    <label>patients per row <input type="number" id="perRow" min="1" max="12" value="3"></label>
+    <button id="downloadPanelBtn">Download panel</button>
+    <button id="clearPanelBtn">Clear panel</button>
+  </div>
+  <div id="panelStrip"></div>
+</div>
+<div id="stage"></div>
+
+<script>
+/* ============================================================
+   Lexical-processing model annotator.
+   Same topology / intent as the source PPTX, laid out roomily
+   on a 1280 x 760 canvas so nothing is cramped.
+   ============================================================ */
+const FILLS   = ['#ffffff', '#E7392F', '#F5C542', '#4CAF50']; // component fills
+const STROKES = ['#111111', '#E7392F', '#F5C542', '#4CAF50']; // arrow / line colours
+
+/* Shared layout constants (edit these to re-space the whole diagram). */
+const LX = 162.5, RX = 642.5, BW = 175, BH = 64;        // column x, box width/height
+const LCX = LX + BW / 2, RCX = RX + BW / 2;             // column centres (250 / 730)
+const R1 = 190, R2 = 286, R3 = 382, R4 = 478;           // shared row top-y
+
+/* --- Clickable rounded-rectangle components (fill-cyclable) --- */
+const BOXES = [
+  { id:'phon-input-buffer',    x:LX, y:R1, w:BW, h:BH, cls:'phi', lines:['Phonological','Input  buffer'] },
+  { id:'phon-input-lexicon',   x:LX, y:R2, w:BW, h:BH, cls:'phi', lines:['Phonological','input lexicon'] },
+  { id:'orth-output-lexicon',  x:LX, y:R3, w:BW, h:BH, cls:'phi', lines:['Orthographic','output lexicon'] },
+  { id:'orth-output-buffer',   x:LX, y:R4, w:BW, h:BH, cls:'phi', lines:['Orthographic','output buffer'] },
+  { id:'orth-input-buffer',    x:RX, y:R1, w:BW, h:BH, lines:['Orthographic','input buffer'] },
+  { id:'orth-input-lexicon',   x:RX, y:R2, w:BW, h:BH, lines:['Orthographic','input lexicon'] },
+  { id:'phon-output-lexicon',  x:RX, y:R3, w:BW, h:BH, lines:['Phonological','output lexicon'] },
+  { id:'phon-output-buffer',   x:RX, y:R4, w:BW, h:BH, lines:['Phonological','output buffer'] },
+  { id:'semantic-lexicon',     x:428, y:334, w:124, h:60, lines:['Semantic','lexicon'] },
+  { id:'syntactic-lexicon',    x:407.5, y:426, w:165, h:46, lines:['Syntactic lexicon'], fontSize:13 },
+];
+
+/* --- Container boxes with independently-clickable sub-components --- */
+const CONTAINERS = [
+  {
+    id:'ova', x:585, y:84, w:290, h:74,
+    title:['Orthographic visual analysis'], titleY:104, titleSize:13.5,
+    subs:[
+      { id:'ova-letter-identity',     x:592, y:120, w:86, h:30, lines:['Letter','identity'] },
+      { id:'ova-letter-position',     x:686, y:120, w:86, h:30, lines:['Letter','position'] },
+      { id:'ova-letter-word-binding', x:780, y:120, w:86, h:30, lines:['Letter to','word binding'] },
+    ]
+  },
+  {
+    // centred vertically on the right loop (loop centre y = 368); the loop
+    // bulges right and tucks behind this box, so GPC sits in the loop's middle.
+    id:'gpc', x:915, y:278, w:235, h:180,
+    title:['Grapheme to phoneme','conversion'], titleY:312, titleSize:14,
+    subs:[
+      { id:'gpc-vowels',    x:935, y:346, w:195, h:32, fontSize:14, lines:['Vowels'] },
+      { id:'gpc-morphemes', x:935, y:384, w:195, h:32, fontSize:14, lines:['Morphemes'] },
+      { id:'gpc-voicing',   x:935, y:422, w:195, h:32, fontSize:14, lines:['Voicing'] },
+    ]
+  },
+];
+
+/* --- Cloud (fill-cyclable) --- */
+const CLOUD = {
+  id:'conceptual-system', cx:490, cy:270, rx:62, ry:25, bumps:11,
+  textX:490, textY:270, lines:['Conceptual', 'system'], textSize:13.5
+};
+
+/* --- Syntax icons (stroke/fill-cyclable): a phrase-structure tree for
+       "structure building" and a U-turn arrow for "movement". --- */
+const SYNTAX_TREE = { id:'syntax-structure', x:454, y:508, s:0.8 };
+const SYNTAX_MOVE = { id:'syntax-movement',  x:465, y:596, w:52, h:36 };
+
+/* --- Star / moon markers (independently fill-cyclable) --- */
+const MARKERS = [
+  { id:'star-phon-input',  type:'star', cx:319, cy:331, R:10, cls:'phi' },
+  { id:'star-orth-input',  type:'star', cx:799, cy:331, R:10 },
+  { id:'star-phon-output', type:'star', cx:799, cy:428, R:10 },
+  { id:'moon-syntactic',   type:'moon', cx:560, cy:449, R:9 },
+];
+
+/* --- Non-clickable text labels --- */
+const LABELS = [
+  { x:RCX, y:44,  t:'Written input', size:13 },
+  { x:LCX, y:150, t:'Phonological analysis', size:13, cls:'phi' },
+  { x:490, y:193, t:'Sensory input', size:12 },
+  { x:490, y:208, t:'(e.g., pictures)', size:12 },
+  // syntax labels sit to the right of their icons (left-aligned)
+  { x:526, y:525, t:'Syntax', size:12, weight:700, anchor:'start' },
+  { x:526, y:540, t:'(structure', size:12, weight:700, anchor:'start' },
+  { x:526, y:555, t:'building)', size:12, weight:700, anchor:'start' },
+  { x:524, y:608, t:'Syntax', size:12, weight:700, anchor:'start' },
+  { x:524, y:623, t:'(movement)', size:12, weight:700, anchor:'start' },
+];
+
+/* --- Arrows (recolour shaft + head as one unit). both:true => double-headed --- */
+const ARROWS = [
+  // left descending route (x = 250) — all vertical arrows ~28px long
+  { x1:LCX, y1:160, x2:LCX, y2:188, cls:'phi' },
+  { x1:LCX, y1:256, x2:LCX, y2:284, cls:'phi' },
+  { x1:LCX, y1:352, x2:LCX, y2:380, cls:'phi' },
+  { x1:LCX, y1:448, x2:LCX, y2:476, cls:'phi' },
+  { x1:LCX, y1:544, x2:LCX, y2:572, cls:'phi' },
+  // right descending route (x = 730)
+  { x1:RCX, y1:54,  x2:RCX, y2:82  },
+  { x1:RCX, y1:160, x2:RCX, y2:188 },
+  { x1:RCX, y1:256, x2:RCX, y2:284 },
+  { x1:RCX, y1:352, x2:RCX, y2:380 },   // red in the reference example
+  { x1:RCX, y1:448, x2:RCX, y2:476 },
+  // centre column
+  { x1:490, y1:211, x2:490, y2:235 },                 // sensory -> conceptual (gap to cloud)
+  { x1:490, y1:306, x2:490, y2:334, both:true },      // conceptual <-> semantic (28px, matches sem<->syntactic)
+  { x1:490, y1:396, x2:490, y2:424, both:true },      // semantic  <-> syntactic
+  { x1:490, y1:474, x2:490, y2:502, both:true },      // syntactic <-> structure tree
+  { x1:490, y1:566, x2:490, y2:594, both:true },      // structure tree <-> movement arrow
+  // diagonal, thick — connect edge-midpoint to edge-midpoint (into the sides
+  // of the semantic lexicon, at the centre of each side)
+  // attach just above / below each side's midpoint so the head of one arrow
+  // does not touch the tail of the other
+  { x1:337.5, y1:320, x2:428, y2:358, w:4, cls:'phi' },  // phon input lexicon -> semantic (left, upper)
+  { x1:428, y1:370, x2:337.5, y2:412, w:4, cls:'phi' },  // semantic (left, lower) -> orth output lexicon
+  { x1:642.5, y1:320, x2:552, y2:358, w:4 },  // orth input lexicon -> semantic (right, upper)
+  { x1:552, y1:370, x2:642.5, y2:412, w:4 },  // semantic (right, lower) -> phon output lexicon
+];
+
+/* --- Double-line block-arc route loops (stroke-cyclable) --- */
+const LOOPS = [
+  { id:'left-loop',  cls:'phi', paths:['M 162.5 226 A 104 142 0 0 0 162.5 510',
+                            'M 162.5 234 A 96 134 0 0 0 162.5 502'] },
+  { id:'right-loop', paths:['M 817.5 226 A 124 142 0 0 1 817.5 510',
+                            'M 817.5 234 A 116 134 0 0 1 817.5 502'] },
+];
+
+/* ============================================================
+   SVG helpers
+   ============================================================ */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const VB_W = 1280, VB_H = 760;
+const r1 = n => Math.round(n * 10) / 10;
+
+function el(name, attrs = {}, parent = null) {
+  const e = document.createElementNS(SVGNS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function addText(parent, cx, cy, lines, { size = 14, weight = 700, anchor = 'middle' } = {}) {
+  const lh = size + 4;
+  const startY = cy - ((lines.length - 1) * lh) / 2 + size / 3;
+  lines.forEach((line, i) => {
+    const t = el('text', {
+      x: cx, y: startY + i * lh, 'text-anchor': anchor,
+      'font-size': size, 'font-weight': weight,
+      'font-family': 'Arial, Helvetica, sans-serif',
+      fill: '#000', 'pointer-events': 'none'
+    }, parent);
+    t.textContent = line;
+  });
+}
+
+/* an arrow as a single path (shaft + head recolour as one unit) */
+function headTri(tx, ty, ux, uy, L = 9, W = 5) {
+  const px = -uy, py = ux;
+  const bx = tx - L * ux, by = ty - L * uy;
+  return `M ${r1(bx + W * px)} ${r1(by + W * py)} L ${r1(tx)} ${r1(ty)} `
+       + `L ${r1(bx - W * px)} ${r1(by - W * py)} Z`;
+}
+function arrowPath(x1, y1, x2, y2, both) {
+  const a = Math.atan2(y2 - y1, x2 - x1), ux = Math.cos(a), uy = Math.sin(a), L = 9;
+  const eb = [x2 - L * ux, y2 - L * uy];
+  let sx = x1, sy = y1, startHead = '';
+  if (both) { sx = x1 + L * ux; sy = y1 + L * uy; startHead = ' ' + headTri(x1, y1, -ux, -uy); }
+  return `M ${r1(sx)} ${r1(sy)} L ${r1(eb[0])} ${r1(eb[1])} ` + headTri(x2, y2, ux, uy) + startHead;
+}
+
+/* colour cycling. Each clickable group carries a stable data-key so its colour
+   index can be serialised (for the panel) and re-applied to any copy. */
+let _keyCounter = 0;
+function applyFill(group, idx) {
+  group.setAttribute('data-fill', idx);
+  const shape = group.tagName.toLowerCase() === 'g'
+    ? group.querySelector('rect, path, polygon, circle') : group;
+  if (shape) shape.setAttribute('fill', FILLS[idx]);
+}
+function applyStroke(group, idx) {
+  group.setAttribute('data-color', idx);
+  group.querySelectorAll('line, path, circle').forEach(e => {
+    if (e.getAttribute('stroke') === 'transparent') return;
+    e.setAttribute('stroke', STROKES[idx]);
+    const f = e.getAttribute('fill');
+    if (f && f !== 'none' && f !== 'transparent') e.setAttribute('fill', STROKES[idx]);
+  });
+}
+function makeFillCyclable(shape, group = shape) {
+  group.setAttribute('data-fill', 0);
+  group.setAttribute('data-key', group.id || ('f' + (_keyCounter++)));
+  group.classList.add('clickable');
+  group.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    applyFill(group, ((+group.getAttribute('data-fill')) + 1) % FILLS.length);
+    if (typeof touch === 'function') touch();
+  });
+}
+function makeStrokeCyclable(group, strokeEls = [], fillEls = []) {
+  group.setAttribute('data-color', 0);
+  group.setAttribute('data-key', group.id || ('a' + (_keyCounter++)));
+  group.classList.add('clickable');
+  group.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    applyStroke(group, ((+group.getAttribute('data-color')) + 1) % STROKES.length);
+    if (typeof touch === 'function') touch();
+  });
+}
+
+/* element builders */
+function addBox(parent, b, rx = 9) {
+  const shape = el('rect', {
+    id: b.id, x: b.x, y: b.y, width: b.w, height: b.h, rx: b.rx ?? rx,
+    fill: FILLS[0], stroke: '#000', 'stroke-width': 2.2
+  }, parent);
+  makeFillCyclable(shape);
+  if (b.lines && b.lines.length)
+    addText(parent, b.x + b.w / 2, b.y + b.h / 2, b.lines, { size: b.fontSize || 15 });
+  return shape;
+}
+
+function addArrow(parent, a) {
+  const g = el('g', {}, parent);
+  const vis = el('path', {
+    d: arrowPath(a.x1, a.y1, a.x2, a.y2, a.both),
+    fill: STROKES[0], stroke: STROKES[0],
+    'stroke-width': a.w || 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+  }, g);
+  el('path', {
+    d: `M ${a.x1} ${a.y1} L ${a.x2} ${a.y2}`,
+    fill: 'none', stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke'
+  }, g);
+  makeStrokeCyclable(g, [], [vis]);
+  return g;
+}
+
+function addLoop(parent, c) {
+  const g = el('g', { id: c.id }, parent);
+  const strokeEls = c.paths.map(d => el('path', {
+    d, fill: 'none', stroke: STROKES[0], 'stroke-width': 2.2
+  }, g));
+  c.paths.forEach(d => el('path', {
+    d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, 'pointer-events': 'stroke'
+  }, g));
+  makeStrokeCyclable(g, strokeEls, []);
+  return g;
+}
+
+// a thought-bubble cloud: bumps all the way around an ellipse
+function cloudPath(cx, cy, rx, ry, n) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI - Math.PI / 2;
+    pts.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]);
+  }
+  let d = `M ${r1(pts[0][0])} ${r1(pts[0][1])} `;
+  for (let i = 0; i < n; i++) {
+    const p1 = pts[(i + 1) % n], p0 = pts[i];
+    const br = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) * 0.62;
+    d += `A ${r1(br)} ${r1(br)} 0 0 1 ${r1(p1[0])} ${r1(p1[1])} `;
+  }
+  return d + 'Z';
+}
+function addCloud(parent, c) {
+  const g = el('g', { id: c.id }, parent);
+  const path = el('path', {
+    d: cloudPath(c.cx, c.cy, c.rx, c.ry, c.bumps),
+    fill: FILLS[0], stroke: '#000', 'stroke-width': 2.2, 'stroke-linejoin': 'round'
+  }, g);
+  addText(g, c.textX, c.textY, c.lines, { size: c.textSize || 11 });
+  makeFillCyclable(path, g);
+}
+
+// phrase-structure tree (dots = nodes, lines = edges); stroke+fill-cyclable
+function addSyntaxTree(parent, { id, x, y, s }) {
+  const g = el('g', { id }, parent);
+  const P = {
+    root:[44,5], L:[22,28], R:[58,28], LL:[9,52], LR:[34,52],
+    RL:[46,52], R2:[72,45], R2L:[62,70], R2R:[84,70]
+  };
+  const edges = [['root','L'],['root','R'],['L','LL'],['L','LR'],
+                 ['R','RL'],['R','R2'],['R2','R2L'],['R2','R2R']];
+  const pt = k => [x + P[k][0] * s, y + P[k][1] * s];
+  const strokeEls = [], fillEls = [];
+  edges.forEach(([a, b]) => {
+    const pa = pt(a), pb = pt(b);
+    strokeEls.push(el('line', {
+      x1: r1(pa[0]), y1: r1(pa[1]), x2: r1(pb[0]), y2: r1(pb[1]),
+      stroke: STROKES[0], 'stroke-width': 2.2, 'stroke-linecap': 'round'
+    }, g));
+  });
+  Object.keys(P).forEach(k => {
+    const p = pt(k);
+    fillEls.push(el('circle', { cx: r1(p[0]), cy: r1(p[1]), r: 3.8,
+      fill: STROKES[0], stroke: STROKES[0], 'stroke-width': 1 }, g));
+  });
+  el('rect', { x, y, width: 90 * s, height: 75 * s, fill: 'transparent', 'pointer-events': 'all' }, g);
+  makeStrokeCyclable(g, strokeEls, fillEls);
+  return g;
+}
+
+// U-turn arrow (movement): a U opening upward with an arrowhead on the left prong
+function addMovementArrow(parent, { id, x, y, w, h }) {
+  const g = el('g', { id }, parent);
+  const r = 7, xr = x + w, xl = x, yt = y, yb = y + h;
+  const d = `M ${r1(xr)} ${r1(yt + 6)} L ${r1(xr)} ${r1(yb - r)} `
+          + `Q ${r1(xr)} ${r1(yb)} ${r1(xr - r)} ${r1(yb)} L ${r1(xl + r)} ${r1(yb)} `
+          + `Q ${r1(xl)} ${r1(yb)} ${r1(xl)} ${r1(yb - r)} L ${r1(xl)} ${r1(yt + 10)}`;
+  const shaft = el('path', { d, fill: 'none', stroke: STROKES[0],
+    'stroke-width': 2.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+  const head = el('path', { d: headTri(xl, yt, 0, -1, 11, 7),
+    fill: STROKES[0], stroke: STROKES[0], 'stroke-width': 2, 'stroke-linejoin': 'round' }, g);
+  el('rect', { x: xl - 8, y: yt, width: w + 16, height: h, fill: 'transparent', 'pointer-events': 'all' }, g);
+  makeStrokeCyclable(g, [shaft], [head]);
+  return g;
+}
+
+// 5-pointed star outline
+function starPath(cx, cy, R) {
+  const r = R * 0.42;
+  let p = '';
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rad = (i % 2 === 0) ? R : r;
+    p += (i === 0 ? 'M ' : 'L ') + r1(cx + rad * Math.cos(a)) + ' ' + r1(cy + rad * Math.sin(a)) + ' ';
+  }
+  return p + 'Z';
+}
+// crescent-moon outline (opening to the right)
+function crescentPath(cx, cy, R) {
+  const ix = cx + 0.28 * R, t = cy - 0.96 * R, b = cy + 0.96 * R;
+  return `M ${r1(ix)} ${r1(t)} A ${R} ${R} 0 1 0 ${r1(ix)} ${r1(b)} `
+       + `A ${R} ${R} 0 0 1 ${r1(ix)} ${r1(t)} Z`;
+}
+// star / moon as an independently fill-cyclable marker
+function addMarker(parent, m) {
+  const g = el('g', { id: m.id }, parent);
+  const d = m.type === 'star' ? starPath(m.cx, m.cy, m.R) : crescentPath(m.cx, m.cy, m.R);
+  const shape = el('path', { d, fill: FILLS[0], stroke: '#000', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, g);
+  el('circle', { cx: m.cx, cy: m.cy, r: m.R + 3, fill: 'transparent', 'pointer-events': 'all' }, g);
+  makeFillCyclable(shape, g);
+  return g;
+}
+
+/* ============================================================
+   Build the diagram
+   ============================================================ */
+function buildSVG() {
+  const svg = el('svg', { viewBox: `0 0 ${VB_W} ${VB_H}`, id: 'diagram' });
+  el('rect', { x: 0, y: 0, width: VB_W, height: VB_H, fill: '#fff' }, svg); // export bg
+  const content = el('g', { id: 'content' }, svg); // everything here is centred as one unit
+  const phi = el('g', { id: 'phi-group' }, content); // left (phonological-input) route — toggleable
+  const par = x => (x && x.cls === 'phi') ? phi : content;
+
+  LOOPS.forEach(c => addLoop(par(c), c));
+  ARROWS.forEach(a => addArrow(par(a), a));
+
+  addCloud(content, CLOUD);
+  addSyntaxTree(content, SYNTAX_TREE);
+  addMovementArrow(content, SYNTAX_MOVE);
+
+  LABELS.forEach(l => {
+    const t = el('text', {
+      x: l.x, y: l.y, 'text-anchor': l.anchor || 'middle',
+      'font-size': l.size, 'font-weight': l.weight || 400,
+      'font-family': 'Arial, Helvetica, sans-serif', fill: '#000'
+    }, par(l));
+    t.textContent = l.t;
+  });
+
+  BOXES.forEach(b => addBox(par(b), b, 9));
+  CONTAINERS.forEach(c => {
+    addBox(content, { id: c.id, x: c.x, y: c.y, w: c.w, h: c.h, rx: 10, lines: [] });
+    addText(content, c.x + c.w / 2, c.titleY, c.title, { size: c.titleSize || 13 });
+    c.subs.forEach(s => addBox(content, { ...s, fontSize: s.fontSize || 10.5 }, 8));
+  });
+
+  MARKERS.forEach(m => addMarker(par(m), m)); // stars & moon on top, independently clickable
+
+  return { svg, content, phi };
+}
+
+/* ============================================================
+   Page wiring
+   ============================================================ */
+const stage = document.getElementById('stage');
+const { svg, content, phi } = buildSVG();
+stage.appendChild(svg);
+
+// patient-ID title (sits in the content group so it shifts with the model)
+const title = el('text', {
+  id: 'titleText', x: 490, y: 150, 'text-anchor': 'middle',
+  'font-size': 56, 'font-weight': 700,
+  'font-family': 'Arial, Helvetica, sans-serif', fill: '#000'
+}, content);
+title.textContent = '';
+
+// centre the currently-visible model in the white canvas (title excluded so a
+// long/empty ID doesn't shift the framing)
+function recenter() {
+  // fit the editor's viewBox tightly to the model (title excluded so a long/empty
+  // ID never reshuffles the framing) — the model fills the frame with no wasted margins
+  content.setAttribute('transform', 'translate(0 0)');
+  title.style.display = 'none';
+  const bb = content.getBBox();
+  title.style.display = '';
+  const pad = 10;
+  svg.setAttribute('viewBox',
+    `${r1(bb.x - pad)} ${r1(bb.y - pad)} ${r1(bb.width + 2 * pad)} ${r1(bb.height + 2 * pad)}`);
+}
+recenter();
+
+// toggle the left (phonological-input) route on/off
+const phiToggle = document.getElementById('phiToggle');
+phiToggle.addEventListener('change', () => {
+  phi.style.display = phiToggle.checked ? '' : 'none';
+  recenter();
+  touch();
+});
+
+const subjectInput = document.getElementById('subjectId');
+subjectInput.addEventListener('input', (e) => { title.textContent = e.target.value; touch(); });
+
+/* ============================================================
+   Colour state helpers (used by editor, panel, export)
+   ============================================================ */
+function resetColors(root = svg) {
+  root.querySelectorAll('[data-fill]').forEach(g => applyFill(g, 0));
+  root.querySelectorAll('[data-color]').forEach(g => applyStroke(g, 0));
+}
+
+// snapshot the editor's current annotation as a plain object
+function snapshotState() {
+  const colors = {};
+  svg.querySelectorAll('[data-fill],[data-color]').forEach(g => {
+    const idx = +(g.getAttribute('data-fill') ?? g.getAttribute('data-color'));
+    if (idx) colors[g.getAttribute('data-key')] = idx;
+  });
+  return { name: subjectInput.value, phi: phiToggle.checked, colors };
+}
+// load a saved state back into the live editor
+function applyState(st) {
+  subjectInput.value = st.name || '';
+  title.textContent = st.name || '';
+  phiToggle.checked = st.phi !== false;
+  phi.style.display = phiToggle.checked ? '' : 'none';
+  resetColors();
+  const cols = st.colors || {};
+  svg.querySelectorAll('[data-fill]').forEach(g => applyFill(g, cols[g.getAttribute('data-key')] || 0));
+  svg.querySelectorAll('[data-color]').forEach(g => applyStroke(g, cols[g.getAttribute('data-key')] || 0));
+  recenter();
+}
+
+// Reset clears colours. It syncs the panel only if this patient is already saved
+// (currentKey set); it never creates a new entry — resetting a fresh/clean model does nothing.
+document.getElementById('resetBtn').addEventListener('click', () => {
+  resetColors();
+  if (currentKey != null) touch();
+});
+document.getElementById('exportBtn').addEventListener('click', exportPNG);
+
+/* ============================================================
+   Render a saved state to a fresh, self-centred SVG clone
+   ============================================================ */
+function makeStateSVG(st) {
+  const clone = svg.cloneNode(true);
+  const c = clone.querySelector('#content');
+  const p = clone.querySelector('#phi-group');
+  const t = clone.querySelector('#titleText');
+  // strip ALL ids so clones (thumbnails / export) never collide with the live editor
+  clone.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+  clone.removeAttribute('id');
+  if (p) p.style.display = (st.phi === false) ? 'none' : '';
+  const cols = st.colors || {};
+  clone.querySelectorAll('[data-fill]').forEach(g => applyFill(g, cols[g.getAttribute('data-key')] || 0));
+  clone.querySelectorAll('[data-color]').forEach(g => applyStroke(g, cols[g.getAttribute('data-key')] || 0));
+  if (t) t.textContent = st.name || '';
+  return { clone, content: c, title: t };
+}
+function recenterContent(c, t) {
+  if (t) t.style.display = 'none';
+  const bb = c.getBBox();
+  if (t) t.style.display = '';
+  c.setAttribute('transform',
+    `translate(${r1(VB_W / 2 - (bb.x + bb.width / 2))} ${r1(VB_H / 2 - (bb.y + bb.height / 2))})`);
+}
+// crop a thumbnail svg tightly to its diagram (incl. the ID), expanded to the
+// card's aspect so it fills the card with no wasted margins
+function frameThumb(clone, c, aspect) {
+  c.setAttribute('transform', 'translate(0 0)');
+  const bb = c.getBBox();
+  const pad = 16;
+  let x = bb.x - pad, y = bb.y - pad, w = bb.width + 2 * pad, h = bb.height + 2 * pad;
+  if (w / h < aspect) { const nw = h * aspect; x -= (nw - w) / 2; w = nw; }
+  else { const nh = w / aspect; y -= (nh - h) / 2; h = nh; }
+  clone.setAttribute('viewBox', `${r1(x)} ${r1(y)} ${r1(w)} ${r1(h)}`);
+}
+// rasterise a saved state to an opaque canvas cell
+function renderStateToCanvas(st, scale) {
+  return new Promise((resolve, reject) => {
+    const { clone, content, title: t } = makeStateSVG(st);
+    clone.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`); // uniform full-canvas cells (editor uses a tight viewBox)
+    clone.setAttribute('width', VB_W);
+    clone.setAttribute('height', VB_H);
+    const holder = document.createElement('div');
+    holder.style.cssText = `position:absolute;left:-99999px;top:0;width:${VB_W}px;height:${VB_H}px;`;
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+    recenterContent(content, t);
+    const xml = new XMLSerializer().serializeToString(clone);
+    document.body.removeChild(holder);
+    const url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }));
+    const img = new Image();
+    img.onload = () => {
+      const cnv = document.createElement('canvas');
+      cnv.width = VB_W * scale; cnv.height = VB_H * scale;
+      const x = cnv.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, cnv.width, cnv.height);
+      x.drawImage(img, 0, 0, cnv.width, cnv.height);
+      URL.revokeObjectURL(url); resolve(cnv);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('render failed')); };
+    img.src = url;
+  });
+}
+
+function exportPNG() {
+  renderStateToCanvas(snapshotState(), 3).then(cnv => {
+    const patient = (subjectInput.value || 'patient').replace(/[^\w\-]+/g, '_');
+    const a = document.createElement('a');
+    a.download = `lexical-model_${patient}.png`;
+    a.href = cnv.toDataURL('image/png');
+    a.click();
+  }).catch(() => alert('Export failed.'));
+}
+
+/* ============================================================
+   Panel: save / load / delete patients + combined download
+   ============================================================ */
+const STORE_KEY = 'lema-panel';
+let panel = [];
+let currentKey = null;
+const strip = document.getElementById('panelStrip');
+const perRowInput = document.getElementById('perRow');
+
+function uid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function savePanel() { try { localStorage.setItem(STORE_KEY, JSON.stringify(panel)); } catch (e) {} }
+function loadPanel() { try { panel = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch (e) { panel = []; } }
+
+// live auto-save. The first edit of a fresh patient creates its panel entry
+// automatically (so "+ New" + editing replaces a manual "Add to panel").
+let _touchTimer = null;
+function touch() {
+  if (currentKey == null) {
+    currentKey = uid();
+    panel.push({ key: currentKey, name: subjectInput.value, phi: phiToggle.checked, colors: {} });
+  }
+  const i = panel.findIndex(p => p.key === currentKey);
+  if (i < 0) return;
+  const st = snapshotState(); st.key = currentKey; panel[i] = st;
+  savePanel();
+  clearTimeout(_touchTimer);
+  _touchTimer = setTimeout(renderStrip, 150); // refresh the card thumbnail shortly after
+}
+function loadPatient(key) {
+  const st = panel.find(p => p.key === key); if (!st) return;
+  currentKey = key; applyState(st); renderStrip();
+}
+function deletePatient(key) {
+  panel = panel.filter(p => p.key !== key);
+  if (currentKey === key) currentKey = null;
+  savePanel(); renderStrip();
+}
+function newPatient() {
+  currentKey = null;
+  subjectInput.value = ''; title.textContent = '';
+  phiToggle.checked = true; phi.style.display = '';
+  resetColors(); recenter(); renderStrip();
+}
+
+function renderStrip() {
+  strip.innerHTML = '';
+  const toCrop = [];
+  panel.forEach(st => {
+    const card = document.createElement('div');
+    card.className = 'card' + (st.key === currentKey ? ' active' : '');
+    card.title = 'Click to open for editing';
+    card.addEventListener('click', () => loadPatient(st.key));
+
+    const del = document.createElement('button');
+    del.className = 'del'; del.textContent = '×'; del.title = 'Delete';
+    del.addEventListener('click', (ev) => { ev.stopPropagation(); deletePatient(st.key); });
+    card.appendChild(del);
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    const { clone, content } = makeStateSVG(st);
+    clone.querySelectorAll('text').forEach(t => t.remove()); // thumbnails: shapes + colors only
+    clone.setAttribute('width', '100%'); clone.setAttribute('height', '100%');
+    thumb.appendChild(clone);
+    card.appendChild(thumb);
+
+    const label = document.createElement('div');
+    label.className = 'cardid'; label.textContent = st.name || '(no ID)';
+    card.appendChild(label);
+
+    strip.appendChild(card);
+    toCrop.push({ clone, content });
+  });
+
+  const add = document.createElement('div');
+  add.className = 'card new'; add.textContent = '+ New';
+  add.title = 'Start a new patient';
+  add.addEventListener('click', newPatient);
+  strip.appendChild(add);
+
+  // thumbnails must be in the DOM before we can measure/crop them
+  toCrop.forEach(x => frameThumb(x.clone, x.content, 1280 / 760));
+}
+
+async function downloadPanel() {
+  if (!panel.length) { alert('Panel is empty — add a patient first.'); return; }
+  const perRow = Math.max(1, Math.min(12, parseInt(perRowInput.value, 10) || 3));
+  const scale = 2, cols = Math.min(perRow, panel.length), rows = Math.ceil(panel.length / cols);
+  const cw = VB_W * scale, ch = VB_H * scale;
+  let cells;
+  try { cells = await Promise.all(panel.map(st => renderStateToCanvas(st, scale))); }
+  catch (e) { alert('Panel export failed.'); return; }
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * cw; canvas.height = rows * ch;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  cells.forEach((cell, i) => ctx.drawImage(cell, (i % cols) * cw, Math.floor(i / cols) * ch));
+  const a = document.createElement('a');
+  a.download = 'lema-panel.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+document.getElementById('downloadPanelBtn').addEventListener('click', downloadPanel);
+document.getElementById('clearPanelBtn').addEventListener('click', () => {
+  if (!panel.length) { alert('The panel is already empty.'); return; }
+  if (!confirm(`Clear the whole panel? This permanently removes all ${panel.length} saved patient(s).`)) return;
+  panel = []; currentKey = null; savePanel(); renderStrip();
+});
+
+loadPanel();
+renderStrip();
+</script>
+</body>
+</html>
