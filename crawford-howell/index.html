@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crawford–Howell Modified t-Test</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#ffffff; --ink:#1c2530; --muted:#64748b; --line:#e5e9f0;
+    --accent:#2563eb; --accent-soft:#eaf1ff;
+    --good:#0f9d58;
+    --hi-bg:#fef3c7; --hi-line:#f0b429; --hi-ink:#8a5a06;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 28px rgba(16,24,40,.07);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1420; --card:#161e2b; --ink:#e6ecf3; --muted:#94a3b8; --line:#26303f;
+      --accent:#5b8cff; --accent-soft:#1a2740;
+      --good:#3ec77e;
+      --hi-bg:rgba(240,180,41,.15); --hi-line:#c99a2e; --hi-ink:#f5c451;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:720px;margin:0 auto;padding:34px 20px 64px}
+  header h1{font-size:1.55rem;margin:0 0 5px;letter-spacing:-.01em}
+  header p.sub{margin:0;color:var(--muted);font-size:.95rem}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px;margin-top:22px;}
+
+  .step{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:0 0 12px}
+  .step:not(:first-child){margin-top:26px;padding-top:24px;border-top:1px solid var(--line)}
+
+  .tabs{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;margin-bottom:16px}
+  .tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:.9rem;font-weight:600;
+    padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s;}
+  .tabs button.active{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media (max-width:560px){.grid{grid-template-columns:1fr}}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field label{font-size:.9rem;font-weight:600}
+  .field .hint{font-size:.8rem;color:var(--muted);font-weight:400}
+  input[type=number],input[type=text],textarea{font:inherit;font-size:1rem;padding:11px 13px;border:1px solid var(--line);
+    border-radius:10px;background:var(--bg);color:var(--ink);width:100%;transition:border-color .15s,box-shadow .15s;}
+  input:focus,textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea{min-height:110px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem;line-height:1.6}
+  .rawstats{font-size:.88rem;color:var(--muted);margin-top:10px;min-height:1.2em}
+  .rawstats b{color:var(--ink)}
+
+  .row{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  .opt{display:flex;flex-direction:column;gap:8px}
+  .opt .label{font-size:.9rem;font-weight:600}
+  .seg{display:inline-flex;flex-wrap:wrap}
+  .seg label{padding:9px 15px;font-size:.9rem;cursor:pointer;background:var(--card);color:var(--muted);
+    border:1px solid var(--line);border-right-width:0}
+  .seg label:first-child{border-radius:10px 0 0 10px}
+  .seg label:last-child{border-radius:0 10px 10px 0;border-right-width:1px}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg label:has(input:checked){background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+  .actions{display:flex;gap:12px;margin-top:26px;align-items:center;flex-wrap:wrap}
+  button.primary{background:var(--accent);color:#fff;border:0;font:inherit;font-weight:600;font-size:.98rem;
+    padding:12px 26px;border-radius:11px;cursor:pointer;transition:.15s;}
+  button.primary:hover{filter:brightness(1.05)}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);font:inherit;font-weight:600;
+    padding:12px 20px;border-radius:11px;cursor:pointer}
+  .err{color:#dc2626;font-size:.88rem;margin-top:12px;min-height:1.1em}
+
+  #results{display:none}
+  #results.show{display:block}
+  .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .rhead h2{font-size:1.1rem;margin:0}
+  .copywrap{display:flex;align-items:center;gap:8px}
+  .copied{color:var(--good);font-size:.85rem;font-weight:600;opacity:0;transition:opacity .2s}
+  .copied.show{opacity:1}
+
+  .pblock{border-radius:13px;padding:22px;margin-bottom:18px;border:1px solid transparent}
+  .pblock.sig{background:var(--hi-bg);border-color:var(--hi-line)}
+  .pblock.ns{background:var(--bg);border-color:var(--line)}
+  .pblock .plead{font-size:.82rem;letter-spacing:.01em;font-weight:600;margin-bottom:8px}
+  .pblock.sig .plead{color:var(--hi-ink)} .pblock.ns .plead{color:var(--muted)}
+  .pblock .pbig{font-size:3rem;letter-spacing:-.02em;line-height:1.02;font-variant-numeric:tabular-nums}
+  .pblock.sig .pbig{font-weight:800;color:var(--ink)} .pblock.ns .pbig{font-weight:700;color:var(--ink)}
+  .pblock .pverdict{font-size:1.02rem;font-weight:600;margin-top:8px}
+  .pblock.sig .pverdict{color:var(--hi-ink)} .pblock.ns .pverdict{color:var(--ink)}
+
+  .stats{display:flex;gap:30px;flex-wrap:wrap;margin:2px 2px 6px}
+  .stats .s .k{font-size:.78rem;color:var(--muted);letter-spacing:.02em}
+  .stats .s .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums}
+
+  .cutbox{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:20px}
+  .cutbox .clead{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);margin-bottom:9px}
+  .cutbox .cval{font-size:1.8rem;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .cutbox .cdesc{font-size:.94rem;color:var(--muted);margin-top:8px}
+  .cutbox .cdesc b{color:var(--ink)}
+
+  footer{margin-top:26px;font-size:.8rem;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Crawford–Howell Modified t-Test</h1>
+    <p class="sub">Compare one individual's score against a control sample.</p>
+  </header>
+
+  <div class="card">
+    <p class="step">1 · The control sample</p>
+    <div class="tabs" role="tablist">
+      <button id="tab-summary" class="active" onclick="setMode('summary')">Enter mean &amp; SD</button>
+      <button id="tab-raw" onclick="setMode('raw')">Paste the scores</button>
+    </div>
+
+    <div id="mode-summary">
+      <div class="grid">
+        <div class="field"><label for="mean">Mean</label><input type="text" inputmode="decimal" id="mean"></div>
+        <div class="field"><label for="sd">SD</label><input type="text" inputmode="decimal" id="sd"></div>
+        <div class="field"><label for="n">N</label><input type="number" id="n" step="1" min="2"></div>
+      </div>
+    </div>
+
+    <div id="mode-raw" style="display:none">
+      <div class="field">
+        <label for="raw">The control scores</label>
+        <span class="hint">Paste them separated by commas, spaces, or new lines.</span>
+        <textarea id="raw"></textarea>
+      </div>
+      <div class="rawstats" id="rawstats"></div>
+    </div>
+
+    <p class="step">2 · The individual</p>
+    <div class="grid">
+      <div class="field" style="grid-column:span 2">
+        <label for="x1">Individual score <span class="hint">— optional; leave blank to just get the cutoff</span></label>
+        <input type="text" inputmode="decimal" id="x1">
+      </div>
+    </div>
+
+    <p class="step">3 · The comparison</p>
+    <div class="row">
+      <div class="opt">
+        <span class="label">Which way?</span>
+        <div class="seg">
+          <label><input type="radio" name="dir" value="below" checked>Below the mean</label>
+          <label><input type="radio" name="dir" value="above">Above the mean</label>
+          <label><input type="radio" name="dir" value="two">Either way</label>
+        </div>
+      </div>
+      <div class="opt">
+        <span class="label">Significance level</span>
+        <div class="seg">
+          <label><input type="radio" name="alpha" value="0.05" checked>5%</label>
+          <label><input type="radio" name="alpha" value="0.01">1%</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="run()">Calculate</button>
+      <button class="ghost" onclick="clearAll()">Clear</button>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="card" id="results">
+    <div class="rhead">
+      <h2>Result</h2>
+      <div class="copywrap"><button class="ghost" style="padding:9px 16px" onclick="copyResults()">Copy results</button><span class="copied" id="copied">Copied ✓</span></div>
+    </div>
+    <span id="copySource" aria-hidden="true" style="position:absolute;left:-9999px;top:0;white-space:pre-wrap"></span>
+    <textarea id="manualCopy" readonly style="display:none;width:100%;min-height:64px;margin-bottom:16px"></textarea>
+
+    <div id="testblock">
+      <div class="pblock" id="pblock">
+        <div class="plead" id="plead">p-value</div>
+        <div class="pbig" id="pbig">—</div>
+        <div class="pverdict" id="pverdict"></div>
+      </div>
+      <div class="stats">
+        <div class="s"><div class="k">t</div><div class="v" id="tval">—</div></div>
+        <div class="s"><div class="k">df</div><div class="v" id="dfval">—</div></div>
+        <div class="s"><div class="k">Individual score</div><div class="v" id="x1echo">—</div></div>
+      </div>
+    </div>
+
+    <div class="cutbox">
+      <div class="clead" id="clead">Cutoff</div>
+      <div class="cval" id="cval">—</div>
+      <div class="cdesc" id="cdesc"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Crawford, J.&nbsp;R., &amp; Howell, D.&nbsp;C. (1998). Comparing an individual's test score against norms derived from small samples. <i>The Clinical Neuropsychologist, 12</i>(4), 482–486.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+var mode="summary", last=null;
+
+function setMode(m){
+  mode=m;
+  document.getElementById("tab-summary").classList.toggle("active",m==="summary");
+  document.getElementById("tab-raw").classList.toggle("active",m==="raw");
+  document.getElementById("mode-summary").style.display=m==="summary"?"block":"none";
+  document.getElementById("mode-raw").style.display=m==="raw"?"block":"none";
+  document.getElementById("err").textContent="";
+}
+
+/* ---------- statistics ---------- */
+function logGamma(x){
+  var g=[76.18009172947146,-86.50532032941677,24.01409824083091,
+        -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  var xx=x,y=x,tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp);
+  var ser=1.000000000190015;
+  for(var j=0;j<6;j++){y+=1;ser+=g[j]/y;}
+  return -tmp+Math.log(2.5066282746310005*ser/xx);
+}
+function betacf(a,b,x){
+  var FPMIN=1e-300,qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN)d=FPMIN; d=1/d; var h=d;
+  for(var m=1;m<=200;m++){
+    var m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; var del=d*c; h*=del;
+    if(Math.abs(del-1)<3e-11)break;
+  }
+  return h;
+}
+function betai(a,b,x){
+  if(x<=0)return 0; if(x>=1)return 1;
+  var bt=Math.exp(logGamma(a+b)-logGamma(a)-logGamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  if(x<(a+1)/(a+b+2))return bt*betacf(a,b,x)/a;
+  return 1-bt*betacf(b,a,1-x)/b;
+}
+function tCDF(t,df){ var x=df/(df+t*t),tail=0.5*betai(df/2,0.5,x); return t>=0?1-tail:tail; }
+function tTwoTailP(t,df){ return betai(df/2,0.5, df/(df+t*t)); }
+function tInv(p,df){
+  if(p<=0)return -Infinity; if(p>=1)return Infinity;
+  var lo=-1e6,hi=1e6;
+  for(var i=0;i<200;i++){var mid=(lo+hi)/2; if(tCDF(mid,df)<p)lo=mid; else hi=mid;}
+  return (lo+hi)/2;
+}
+function mean(a){var s=0;for(var i=0;i<a.length;i++)s+=a[i];return s/a.length;}
+function sampleSD(a){var m=mean(a),s=0;for(var i=0;i<a.length;i++){var d=a[i]-m;s+=d*d;}return Math.sqrt(s/(a.length-1));}
+
+function parseRaw(text){
+  var toks=text.split(/[\s,;]+/).filter(function(t){return t.length>0;});
+  var nums=[];
+  for(var i=0;i<toks.length;i++){
+    var v=Number(toks[i].replace(/%/g,""));
+    if(!isFinite(v))return{error:'"'+toks[i]+'" is not a number.'};
+    nums.push(v);
+  }
+  return {values:nums};
+}
+function num(id){ return Number(String(document.getElementById(id).value).replace(/%/g,"").trim()); }
+function filled(id){ return String(document.getElementById(id).value).trim()!==""; }
+function round(v,d){ d=d==null?6:d; var f=Math.pow(10,d); return Math.round(v*f)/f; }
+function fmtPapa(p){ return p<0.001 ? "< .001" : ("= "+p.toFixed(3).replace(/^0/,"")); } // APA: no leading zero
+
+// unit is "%" if any input number carries a % sign
+function detectUnit(){
+  var s=(document.getElementById("x1").value||"")+" "+(document.getElementById("mean").value||"")+" "+
+        (document.getElementById("sd").value||"")+" "+(document.getElementById("raw").value||"");
+  return s.indexOf("%")>=0 ? "%" : "";
+}
+
+/* ---------- live raw preview ---------- */
+document.getElementById("raw").addEventListener("input",function(){ refreshRaw(); });
+function refreshRaw(){
+  var el=document.getElementById("rawstats"), txt=document.getElementById("raw").value.trim(), u=detectUnit();
+  if(!txt){el.innerHTML="";return;}
+  var r=parseRaw(txt);
+  if(r.error){el.innerHTML='<span style="color:#dc2626">'+r.error+'</span>';return;}
+  if(r.values.length<2){el.innerHTML='Need at least 2 values.';return;}
+  el.innerHTML="That's <b>"+r.values.length+"</b> scores &nbsp;·&nbsp; mean <b>"+mean(r.values).toFixed(2)+u+
+    "</b> &nbsp;·&nbsp; SD <b>"+sampleSD(r.values).toFixed(2)+u+"</b>";
+}
+
+/* ---------- main ---------- */
+function run(){
+  var errEl=document.getElementById("err"); errEl.textContent="";
+  document.getElementById("results").classList.remove("show");
+
+  var m2,sd,n;
+  if(mode==="summary"){
+    if(!filled("mean")||!isFinite(num("mean"))){errEl.textContent="Enter the sample mean.";return;}
+    if(!filled("sd")||!isFinite(num("sd"))){errEl.textContent="Enter the sample SD.";return;}
+    if(!filled("n")||!isFinite(num("n"))){errEl.textContent="Enter how many people are in the sample.";return;}
+    m2=num("mean"); sd=num("sd"); n=num("n");
+  }else{
+    var r=parseRaw(document.getElementById("raw").value.trim());
+    if(r.error){errEl.textContent=r.error;return;}
+    if(!r.values||r.values.length<2){errEl.textContent="Paste at least 2 control scores.";return;}
+    n=r.values.length; m2=mean(r.values); sd=sampleSD(r.values);
+  }
+  if(!Number.isInteger(n)||n<2){errEl.textContent="The sample must have at least 2 people (a whole number).";return;}
+  if(sd<=0){errEl.textContent="The SD must be greater than 0.";return;}
+
+  var dir=document.querySelector('input[name=dir]:checked').value;
+  var alpha=parseFloat(document.querySelector('input[name=alpha]:checked').value);
+  var apct=(alpha*100)+"%";
+  var df=n-1, se=sd*Math.sqrt((n+1)/n), u=detectUnit();
+
+  var clead=document.getElementById("clead"), cval=document.getElementById("cval"), cdesc=document.getElementById("cdesc");
+  var cutText="";
+  if(dir==="below"){
+    var tc=tInv(alpha,df), xc=m2+tc*se;
+    clead.textContent="Cutoff  ·  "+apct+" level, below the mean";
+    cval.textContent="score ≤ "+xc.toFixed(2)+u;
+    cdesc.innerHTML="Anyone scoring <b>"+xc.toFixed(2)+u+" or lower</b> is significantly below this sample.";
+    cutText="Cutoff ("+apct+", below mean): score <= "+xc.toFixed(2)+u;
+  }else if(dir==="above"){
+    var tcA=tInv(1-alpha,df), xcA=m2+tcA*se;
+    clead.textContent="Cutoff  ·  "+apct+" level, above the mean";
+    cval.textContent="score ≥ "+xcA.toFixed(2)+u;
+    cdesc.innerHTML="Anyone scoring <b>"+xcA.toFixed(2)+u+" or higher</b> is significantly above this sample.";
+    cutText="Cutoff ("+apct+", above mean): score >= "+xcA.toFixed(2)+u;
+  }else{
+    var tlo=tInv(alpha/2,df), thi=tInv(1-alpha/2,df), xlo=m2+tlo*se, xhi=m2+thi*se;
+    clead.textContent="Cutoff  ·  "+apct+" level, either direction";
+    cval.textContent="≤ "+xlo.toFixed(2)+u+"   or   ≥ "+xhi.toFixed(2)+u;
+    cdesc.innerHTML="Anyone scoring <b>"+xlo.toFixed(2)+u+" or lower</b>, or <b>"+xhi.toFixed(2)+u+" or higher</b>, differs significantly from this sample.";
+    cutText="Cutoff ("+apct+", either direction): score <= "+xlo.toFixed(2)+u+" or >= "+xhi.toFixed(2)+u;
+  }
+
+  var testblock=document.getElementById("testblock"), apaPlain="", apaHtml="";
+  if(filled("x1")){
+    var x1=num("x1");
+    if(!isFinite(x1)){errEl.textContent="The individual's score is not a valid number.";return;}
+    var t=(x1-m2)/se, p2=tTwoTailP(t,df), p, label;
+    if(dir==="below"){ p=tCDF(t,df); label="below the mean"; }
+    else if(dir==="above"){ p=1-tCDF(t,df); label="above the mean"; }
+    else { p=p2; label="either direction"; }
+    var sig=p<alpha;
+
+    document.getElementById("pblock").className="pblock "+(sig?"sig":"ns");
+    document.getElementById("plead").innerHTML="<i>p</i>-value  ·  "+label;
+    document.getElementById("pbig").innerHTML="<i>p</i> "+fmtPapa(p).replace("<","&lt;"); // APA: 3 dp, p < .001
+    var relWord = dir==="below" ? "below" : dir==="above" ? "above" : "different from";
+    document.getElementById("pverdict").textContent =
+      (sig ? "Significantly " : "Not significantly ") + relWord + " the sample at the "+apct+" level.";
+    document.getElementById("tval").textContent=t.toFixed(3);
+    document.getElementById("dfval").textContent=df;
+    document.getElementById("x1echo").textContent=x1+u;
+    testblock.style.display="block";
+    var pTxt=fmtPapa(p);
+    apaPlain="t("+df+") = "+t.toFixed(2)+", p "+pTxt;
+    apaHtml ="t("+df+") = "+t.toFixed(2)+", <i>p</i> "+pTxt;
+  }else{
+    testblock.style.display="none";
+  }
+
+  var mc=document.getElementById("manualCopy"); mc.style.display="none"; mc.value="";
+  last={apaPlain:apaPlain,apaHtml:apaHtml,cutText:cutText,hasScore:filled("x1")};
+  document.getElementById("results").classList.add("show");
+}
+
+/* ---------- copy ----------
+   Copies the APA line as rich text so the italic p survives a paste into Word.
+   Only reveals a manual text box if the browser blocks copying entirely. */
+function copyResults(){
+  if(!last)return;
+  var html  = last.hasScore ? last.apaHtml  : escapeHtml(last.cutText);
+  var plain = last.hasScore ? last.apaPlain : last.cutText;
+
+  // Preferred: select an off-screen rich node and copy (keeps the italic p; works in file://)
+  var ok=false;
+  try{
+    var src=document.getElementById("copySource");
+    src.innerHTML=html;
+    var range=document.createRange(); range.selectNodeContents(src);
+    var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    ok=document.execCommand("copy");
+    sel.removeAllRanges();
+  }catch(e){ ok=false; }
+  if(ok){ flash("Copied ✓"); return; }
+
+  // Next: async clipboard with rich + plain flavours
+  if(navigator.clipboard && window.ClipboardItem){
+    try{
+      var item=new ClipboardItem({
+        "text/html":  new Blob([html],  {type:"text/html"}),
+        "text/plain": new Blob([plain], {type:"text/plain"})
+      });
+      navigator.clipboard.write([item]).then(function(){flash("Copied ✓");}, function(){revealBox(plain);});
+      return;
+    }catch(e){}
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(plain).then(function(){flash("Copied ✓");}, function(){revealBox(plain);});
+    return;
+  }
+  revealBox(plain);
+}
+function revealBox(text){
+  var box=document.getElementById("manualCopy");
+  box.value=text; box.style.display="block"; box.focus(); box.select();
+  flash("Press ⌘/Ctrl-C to copy the selected text");
+}
+function escapeHtml(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function flash(msg){ var c=document.getElementById("copied"); c.textContent=msg; c.classList.add("show"); setTimeout(function(){c.classList.remove("show");},2000); }
+
+function clearAll(){
+  ["mean","sd","n","raw","x1"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("rawstats").innerHTML="";
+  document.getElementById("err").textContent="";
+  document.getElementById("results").classList.remove("show");
+  last=null;
+}
+</script>
+</body>
+</html>
