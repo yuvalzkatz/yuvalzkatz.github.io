@@ -324,21 +324,21 @@ function run(){
   if(dir==="below"){
     var tc=tInv(alpha,df), xc=m2+tc*se;
     clead.textContent="Cutoff  ·  "+apct+" level, below the mean";
-    cval.textContent="score ≤ "+xc.toFixed(2)+u;
-    cdesc.innerHTML="Anyone scoring <b>"+xc.toFixed(2)+u+" or lower</b> is significantly below this sample.";
-    cutText="Cutoff ("+apct+", below mean): score <= "+xc.toFixed(2)+u;
+    cval.textContent="score < "+xc.toFixed(2)+u;
+    cdesc.innerHTML="Anyone scoring <b>below "+xc.toFixed(2)+u+"</b> is significantly below this sample.";
+    cutText="Cutoff ("+apct+", below mean): score < "+xc.toFixed(2)+u;
   }else if(dir==="above"){
     var tcA=tInv(1-alpha,df), xcA=m2+tcA*se;
     clead.textContent="Cutoff  ·  "+apct+" level, above the mean";
-    cval.textContent="score ≥ "+xcA.toFixed(2)+u;
-    cdesc.innerHTML="Anyone scoring <b>"+xcA.toFixed(2)+u+" or higher</b> is significantly above this sample.";
-    cutText="Cutoff ("+apct+", above mean): score >= "+xcA.toFixed(2)+u;
+    cval.textContent="score > "+xcA.toFixed(2)+u;
+    cdesc.innerHTML="Anyone scoring <b>above "+xcA.toFixed(2)+u+"</b> is significantly above this sample.";
+    cutText="Cutoff ("+apct+", above mean): score > "+xcA.toFixed(2)+u;
   }else{
     var tlo=tInv(alpha/2,df), thi=tInv(1-alpha/2,df), xlo=m2+tlo*se, xhi=m2+thi*se;
     clead.textContent="Cutoff  ·  "+apct+" level, either direction";
-    cval.textContent="≤ "+xlo.toFixed(2)+u+"   or   ≥ "+xhi.toFixed(2)+u;
-    cdesc.innerHTML="Anyone scoring <b>"+xlo.toFixed(2)+u+" or lower</b>, or <b>"+xhi.toFixed(2)+u+" or higher</b>, differs significantly from this sample.";
-    cutText="Cutoff ("+apct+", either direction): score <= "+xlo.toFixed(2)+u+" or >= "+xhi.toFixed(2)+u;
+    cval.textContent="< "+xlo.toFixed(2)+u+"   or   > "+xhi.toFixed(2)+u;
+    cdesc.innerHTML="Anyone scoring <b>below "+xlo.toFixed(2)+u+"</b> or <b>above "+xhi.toFixed(2)+u+"</b> differs significantly from this sample.";
+    cutText="Cutoff ("+apct+", either direction): score < "+xlo.toFixed(2)+u+" or > "+xhi.toFixed(2)+u;
   }
 
   var testblock=document.getElementById("testblock"), apaPlain="", apaHtml="";
