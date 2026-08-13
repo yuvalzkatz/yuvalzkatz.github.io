@@ -25,81 +25,84 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;}
-  .wrap{max-width:720px;margin:0 auto;padding:34px 20px 64px}
-  header h1{font-size:1.55rem;margin:0 0 5px;letter-spacing:-.01em}
-  header p.sub{margin:0;color:var(--muted);font-size:.95rem}
+  .wrap{max-width:1060px;margin:0 auto;padding:14px 20px 18px}
+  header h1{font-size:1.3rem;margin:0 0 2px;letter-spacing:-.01em}
+  header p.sub{margin:0;color:var(--muted);font-size:.88rem}
+
+  .cols{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;align-items:start;margin-top:12px}
+  @media (max-width:860px){.cols{grid-template-columns:1fr}}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    box-shadow:var(--shadow);padding:24px;margin-top:22px;}
+    box-shadow:var(--shadow);padding:14px 18px;}
 
-  .step{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:0 0 12px}
-  .step:not(:first-child){margin-top:26px;padding-top:24px;border-top:1px solid var(--line)}
+  .step{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:0 0 7px}
+  .step:not(:first-child){margin-top:11px;padding-top:9px;border-top:1px solid var(--line)}
 
-  .tabs{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px;margin-bottom:16px}
-  .tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:.9rem;font-weight:600;
-    padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s;}
+  .tabs{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:3px;gap:4px;margin-bottom:9px}
+  .tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:.88rem;font-weight:600;
+    padding:6px 13px;border-radius:8px;cursor:pointer;transition:.15s;}
   .tabs button.active{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 
-  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   @media (max-width:560px){.grid{grid-template-columns:1fr}}
-  .field{display:flex;flex-direction:column;gap:7px}
-  .field label{font-size:.9rem;font-weight:600}
-  .field .hint{font-size:.8rem;color:var(--muted);font-weight:400}
-  input[type=number],input[type=text],textarea{font:inherit;font-size:1rem;padding:11px 13px;border:1px solid var(--line);
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:.86rem;font-weight:600}
+  .field .hint{font-size:.77rem;color:var(--muted);font-weight:400}
+  input[type=number],input[type=text],textarea{font:inherit;font-size:.98rem;padding:8px 12px;border:1px solid var(--line);
     border-radius:10px;background:var(--bg);color:var(--ink);width:100%;transition:border-color .15s,box-shadow .15s;}
   input:focus,textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-  textarea{min-height:110px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem;line-height:1.6}
-  .rawstats{font-size:.88rem;color:var(--muted);margin-top:10px;min-height:1.2em}
+  textarea{min-height:70px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem;line-height:1.5}
+  .rawstats{font-size:.85rem;color:var(--muted);margin-top:7px;min-height:1.1em}
   .rawstats b{color:var(--ink)}
 
-  .row{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
-  .opt{display:flex;flex-direction:column;gap:8px}
-  .opt .label{font-size:.9rem;font-weight:600}
+  .row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+  .opt{display:flex;flex-direction:column;gap:6px}
+  .opt .label{font-size:.86rem;font-weight:600}
   .seg{display:inline-flex;flex-wrap:wrap}
-  .seg label{padding:9px 15px;font-size:.9rem;cursor:pointer;background:var(--card);color:var(--muted);
+  .seg label{padding:8px 13px;font-size:.88rem;cursor:pointer;background:var(--card);color:var(--muted);
     border:1px solid var(--line);border-right-width:0}
   .seg label:first-child{border-radius:10px 0 0 10px}
   .seg label:last-child{border-radius:0 10px 10px 0;border-right-width:1px}
   .seg input{position:absolute;opacity:0;pointer-events:none}
   .seg label:has(input:checked){background:var(--accent-soft);color:var(--accent);font-weight:600}
 
-  .actions{display:flex;gap:12px;margin-top:26px;align-items:center;flex-wrap:wrap}
-  button.primary{background:var(--accent);color:#fff;border:0;font:inherit;font-weight:600;font-size:.98rem;
-    padding:12px 26px;border-radius:11px;cursor:pointer;transition:.15s;}
+  .actions{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap}
+  button.primary{background:var(--accent);color:#fff;border:0;font:inherit;font-weight:600;font-size:.93rem;
+    padding:9px 22px;border-radius:11px;cursor:pointer;transition:.15s;}
   button.primary:hover{filter:brightness(1.05)}
   button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);font:inherit;font-weight:600;
-    padding:12px 20px;border-radius:11px;cursor:pointer}
-  .err{color:#dc2626;font-size:.88rem;margin-top:12px;min-height:1.1em}
+    padding:9px 17px;border-radius:11px;cursor:pointer}
+  .err{color:#dc2626;font-size:.85rem;margin-top:8px;min-height:1em}
 
   #results{display:none}
   #results.show{display:block}
-  .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-  .rhead h2{font-size:1.1rem;margin:0}
+  .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .rhead h2{font-size:1.05rem;margin:0}
   .copywrap{display:flex;align-items:center;gap:8px}
   .copied{color:var(--good);font-size:.85rem;font-weight:600;opacity:0;transition:opacity .2s}
   .copied.show{opacity:1}
 
-  .pblock{border-radius:13px;padding:22px;margin-bottom:18px;border:1px solid transparent}
+  .pblock{border-radius:13px;padding:13px 16px;margin-bottom:12px;border:1px solid transparent}
   .pblock.sig{background:var(--hi-bg);border-color:var(--hi-line)}
   .pblock.ns{background:var(--bg);border-color:var(--line)}
-  .pblock .plead{font-size:.82rem;letter-spacing:.01em;font-weight:600;margin-bottom:8px}
+  .pblock .plead{font-size:.8rem;letter-spacing:.01em;font-weight:600;margin-bottom:5px}
   .pblock.sig .plead{color:var(--hi-ink)} .pblock.ns .plead{color:var(--muted)}
-  .pblock .pbig{font-size:3rem;letter-spacing:-.02em;line-height:1.02;font-variant-numeric:tabular-nums}
+  .pblock .pbig{font-size:2.1rem;letter-spacing:-.02em;line-height:1.02;font-variant-numeric:tabular-nums}
   .pblock.sig .pbig{font-weight:800;color:var(--ink)} .pblock.ns .pbig{font-weight:700;color:var(--ink)}
-  .pblock .pverdict{font-size:1.02rem;font-weight:600;margin-top:8px}
+  .pblock .pverdict{font-size:.96rem;font-weight:600;margin-top:6px}
   .pblock.sig .pverdict{color:var(--hi-ink)} .pblock.ns .pverdict{color:var(--ink)}
 
-  .stats{display:flex;gap:30px;flex-wrap:wrap;margin:2px 2px 6px}
-  .stats .s .k{font-size:.78rem;color:var(--muted);letter-spacing:.02em}
-  .stats .s .v{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .stats{display:flex;gap:24px;flex-wrap:wrap;margin:2px 2px 2px}
+  .stats .s .k{font-size:.76rem;color:var(--muted);letter-spacing:.02em}
+  .stats .s .v{font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums}
 
-  .cutbox{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:20px}
-  .cutbox .clead{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);margin-bottom:9px}
-  .cutbox .cval{font-size:1.8rem;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-  .cutbox .cdesc{font-size:.94rem;color:var(--muted);margin-top:8px}
+  .cutbox{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:12px 14px;margin-top:10px}
+  .cutbox .clead{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .cutbox .cval{font-size:1.5rem;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .cutbox .cdesc{font-size:.88rem;color:var(--muted);margin-top:5px}
   .cutbox .cdesc b{color:var(--ink)}
 
-  footer{margin-top:26px;font-size:.8rem;color:var(--muted);line-height:1.6}
+  footer{margin-top:12px;font-size:.75rem;color:var(--muted);line-height:1.45}
 </style>
 </head>
 <body>
@@ -109,6 +112,7 @@
     <p class="sub">Compare one individual's score against a control sample.</p>
   </header>
 
+  <div class="cols">
   <div class="card">
     <p class="step">1 · The control sample</p>
     <div class="tabs" role="tablist">
@@ -118,9 +122,9 @@
 
     <div id="mode-summary">
       <div class="grid">
-        <div class="field"><label for="mean">Mean</label><input type="text" inputmode="decimal" id="mean"></div>
-        <div class="field"><label for="sd">SD</label><input type="text" inputmode="decimal" id="sd"></div>
-        <div class="field"><label for="n">N</label><input type="number" id="n" step="1" min="2"></div>
+        <div class="field"><label for="mean">Mean</label><input type="text" id="mean"></div>
+        <div class="field"><label for="sd">SD</label><input type="text" id="sd"></div>
+        <div class="field"><label for="n">N</label><input type="text" id="n"></div>
       </div>
     </div>
 
@@ -136,8 +140,8 @@
     <p class="step">2 · The individual</p>
     <div class="grid">
       <div class="field" style="grid-column:span 2">
-        <label for="x1">Individual score <span class="hint">— optional; leave blank to just get the cutoff</span></label>
-        <input type="text" inputmode="decimal" id="x1">
+        <label for="x1">Individual score <span class="hint">— optional</span></label>
+        <input type="text" id="x1">
       </div>
     </div>
 
@@ -193,6 +197,7 @@
       <div class="cval" id="cval">—</div>
       <div class="cdesc" id="cdesc"></div>
     </div>
+  </div>
   </div>
 
   <footer>
