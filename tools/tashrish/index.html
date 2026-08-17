@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<!-- Unlisted: reachable only by direct link, kept out of search results. -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>תשריש</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main id="app">
+
+  <!-- 1. Welcome / name ------------------------------------------------- -->
+  <section id="screen-welcome" class="screen active">
+    <h1>תשריש</h1>
+    <p class="lead">ברוכים הבאים. לפני שמתחילים, נא להקליד את שמכם.</p>
+    <label class="field-label" for="participant-name">שם</label>
+    <input
+      id="participant-name"
+      type="text"
+      class="text-input"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      enterkeyhint="done">
+    <p id="name-error" class="error" hidden>נא להקליד שם כדי להתחיל.</p>
+    <button id="btn-start" class="btn btn-primary" type="button">התחלה</button>
+  </section>
+
+  <!-- 2. General instructions ------------------------------------------- -->
+  <section id="screen-general" class="screen">
+    <h2>הוראות</h2>
+    <p id="general-instructions" class="instructions"></p>
+    <button id="btn-general-continue" class="btn btn-primary" type="button">המשך</button>
+  </section>
+
+  <!-- 3. Block instructions --------------------------------------------- -->
+  <section id="screen-block" class="screen">
+    <p id="block-heading" class="block-heading"></p>
+    <p id="block-instructions" class="instructions"></p>
+    <button id="btn-block-continue" class="btn btn-primary" type="button">המשך</button>
+  </section>
+
+  <!-- 4. Stimulus (2000 ms) --------------------------------------------- -->
+  <section id="screen-stimulus" class="screen screen-centered">
+    <div class="stimuli">
+      <div id="stim-1" class="stimulus"></div>
+      <div id="stim-2" class="stimulus"></div>
+    </div>
+  </section>
+
+  <!-- 5. Response -------------------------------------------------------- -->
+  <section id="screen-response" class="screen">
+    <p class="prompt">הקלידו את המילה החדשה:</p>
+    <form id="response-form" autocomplete="off" novalidate>
+      <input
+        id="response-input"
+        type="text"
+        class="text-input answer-input"
+        name="resp-x9f2"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        inputmode="text"
+        enterkeyhint="done"
+        data-form-type="other"
+        data-lpignore="true"
+        data-1p-ignore="true">
+      <button id="btn-submit" class="btn btn-primary" type="submit">שליחה</button>
+    </form>
+    <button id="btn-skip" class="btn btn-secondary" type="button">דילוג</button>
+  </section>
+
+  <!-- 6. Blank inter-trial screen ---------------------------------------- -->
+  <section id="screen-blank" class="screen screen-centered"></section>
+
+  <!-- 7. End -------------------------------------------------------------- -->
+  <section id="screen-end" class="screen screen-centered">
+    <h2 id="end-title">תודה רבה!</h2>
+    <p class="lead">הניסוי הסתיים. תודה על ההשתתפות.</p>
+    <p id="upload-status" class="upload-status"></p>
+    <button id="btn-download-csv" class="btn btn-secondary" type="button" hidden>הורדת קובץ תוצאות (CSV)</button>
+    <button id="btn-retry-upload" class="btn btn-secondary" type="button" hidden>ניסיון שליחה נוסף</button>
+  </section>
+
+</main>
+
+<script src="config.js"></script>
+<script src="items.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
