@@ -102,6 +102,23 @@ an external service", and — the deal-breaker — Google's *broad* Sheets scope
 which covers every spreadsheet in the account rather than just this one. A
 weekly click on File → Download is a better trade.
 
+## Adding a second task later
+
+One deployment serves every task you build. Each request names the tab it wants:
+
+```json
+{ "sheet": "task2", "columns": ["timestamp", "..."], "rows": [ { } ] }
+```
+
+So a new task needs **no change to this script and no new deployment** — copy the
+app folder, and in its `config.js` keep the same `WEB_APP_URL` but set a
+different `SHEET_NAME`. The tab is created with that task's own header row the
+first time data arrives, and may have completely different columns.
+
+If the tab already exists, its header row decides the column order, so
+reordering columns in the sheet by hand never breaks incoming data. Keys that do
+not match any header are dropped.
+
 ## Permissions
 
 `appsscript.json` pins the script to exactly one scope:

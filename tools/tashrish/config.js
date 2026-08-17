@@ -17,6 +17,14 @@ const CONFIG = {
   WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzuu6-RjbdMloIvcjYdj9q3Z2w1ERzubcAUXhRMrHofT0rUjhabpbyhZBMYL73MXLaxfQ/exec',
 
   /*
+   *  Which tab inside the spreadsheet this task writes to. The tab is created
+   *  with the right header row the first time data arrives. A second task can
+   *  reuse the same WEB_APP_URL with a different name here, and its results
+   *  land in their own tab.
+   */
+  SHEET_NAME: 'tashrish',
+
+  /*
    *  Researcher code. The end screen shows the participant nothing but a
    *  thank-you. To reach the retry / CSV-download buttons — which do show
    *  responses and scores — tap the "תודה רבה!" heading 5 times and enter this

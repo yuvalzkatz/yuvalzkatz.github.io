@@ -16,7 +16,7 @@ one row per item.
 | `styles.css` | Mobile-first styling, RTL, light + dark |
 | `app.js` | Flow, timing, scoring, upload queue, CSV fallback |
 | **`items.js`** | **The data file — stimuli, expected answers, block order, instruction texts, timings.** This is the only file you need to touch to change the test. |
-| `config.js` | One line: your Apps Script Web App URL |
+| `config.js` | Web App URL, target tab name, researcher code |
 | `sw.js` | Service worker — lets the test open and run with no connection |
 | `apps-script/Code.gs` | The `doPost` backend to paste into Apps Script |
 | `apps-script/README-apps-script.md` | Step-by-step deployment of the backend |

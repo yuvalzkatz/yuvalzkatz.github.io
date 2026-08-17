@@ -104,7 +104,11 @@
       const res = await fetch(CONFIG.WEB_APP_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ rows: rows }),
+        body: JSON.stringify({
+          sheet: CONFIG.SHEET_NAME || 'tashrish',
+          columns: COLUMNS,
+          rows: rows
+        }),
         redirect: 'follow',
         keepalive: rows.length <= 20
       });
