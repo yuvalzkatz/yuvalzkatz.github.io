@@ -1,0 +1,265 @@
+/* ---------------------------------------------------------------------------
+   LD (הכרעה לקסיקלית) — mobile-first stylesheet
+   --------------------------------------------------------------------------- */
+
+:root {
+  --bg: #ffffff;
+  --fg: #14171a;
+  --muted: #5b6572;
+  --accent: #1f5fd8;
+  --accent-fg: #ffffff;
+  --secondary-bg: #eef1f5;
+  --secondary-fg: #1f2933;
+  --border: #c8cfd8;
+  --error: #b4231d;
+  --yes: #17853f;          /* green — "מילה",    right-hand button */
+  --no: #c2261f;           /* red   — "לא מילה", left-hand button  */
+  --choice-fg: #ffffff;
+  --max-width: 34rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  font-family: "Assistant", "Rubik", "Heebo", -apple-system, BlinkMacSystemFont,
+               "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  font-size: 19px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- screens ------------------------------------------------------------- */
+
+.screen {
+  display: none;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem
+           max(1.5rem, env(safe-area-inset-bottom)) 1.25rem;
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.screen.active { display: flex; }
+
+.screen-centered {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+h1 {
+  font-size: 1.7rem;
+  margin: 0.5rem 0 1rem;
+}
+
+h2 {
+  font-size: 1.45rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.lead {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+}
+
+.block-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.instructions {
+  font-size: 1.15rem;
+  line-height: 1.85;
+  white-space: pre-line;   /* honours the \n in the data file */
+  margin: 0 0 2rem;
+}
+
+.prompt {
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+/* --- fixation ------------------------------------------------------------ */
+
+/* Deliberately quieter and smaller than the word, and centred on the same
+   spot, so it marks where to look without competing with the stimulus. */
+.fixation {
+  font-size: 2.25rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--muted);
+  user-select: none;
+}
+
+/* --- stimulus ------------------------------------------------------------ */
+
+/* One word, dead-centre. It is on screen for 400 ms, so it must not reflow:
+   the size steps down on narrow phones rather than wrapping to two lines. */
+.stimulus {
+  font-size: 2.75rem;        /* ≈ 52px — well above the 32px minimum */
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+@media (max-width: 400px) { .stimulus { font-size: 2.4rem; } }
+@media (max-width: 340px) { .stimulus { font-size: 2.1rem; } }
+
+/* --- inputs -------------------------------------------------------------- */
+
+.field-label {
+  display: block;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.text-input {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  font-size: 1.25rem;        /* ≥16px keeps iOS from zooming on focus */
+  padding: 0.85rem 0.9rem;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--fg);
+  text-align: right;
+  direction: rtl;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.answer-input {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+/* --- buttons ------------------------------------------------------------- */
+
+.btn {
+  display: block;
+  width: 100%;
+  min-height: 3.5rem;        /* large touch target */
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.btn-secondary {
+  background: var(--secondary-bg);
+  color: var(--secondary-fg);
+}
+
+.btn:active { filter: brightness(0.93); }
+
+.btn:disabled { opacity: 0.55; cursor: default; }
+
+/* Push the main action to the bottom on instruction screens. */
+#screen-welcome .btn-primary,
+#screen-general .btn-primary,
+#screen-ready .btn-primary { margin-top: auto; }
+
+/* --- the two response buttons -------------------------------------------- */
+
+/* The page is dir="rtl", so in source order the first child lands on the
+   RIGHT. Green ("מילה") is therefore written first in index.html. */
+.choice-row {
+  display: flex;
+  gap: 0.9rem;
+  width: 100%;
+  margin-top: auto;          /* sit low, under the thumbs */
+}
+
+.btn-choice {
+  flex: 1 1 0;
+  min-height: 7rem;          /* big target — this is a speeded task */
+  margin-top: 0;
+  font-size: 1.35rem;
+  color: var(--choice-fg);
+}
+
+.btn-yes { background: var(--yes); }
+.btn-no  { background: var(--no); }
+
+/* The response screen centres its prompt but keeps the buttons at the bottom. */
+#screen-response { justify-content: flex-start; }
+#screen-response .prompt { margin: auto 0 1rem; }
+
+/* --- misc ---------------------------------------------------------------- */
+
+.error {
+  color: var(--error);
+  font-size: 1rem;
+  margin: 0.5rem 0 0;
+}
+
+.upload-status {
+  color: var(--muted);
+  font-size: 1rem;
+  margin: 1.5rem 0 0;
+  min-height: 1.5rem;
+}
+
+[hidden] { display: none !important; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101317;
+    --fg: #f2f4f7;
+    --muted: #a3adba;
+    --accent: #4d86ef;
+    --accent-fg: #0b0e12;
+    --secondary-bg: #222831;
+    --secondary-fg: #eef1f5;
+    --border: #39424e;
+    --error: #ff8a80;
+    --yes: #1f9c4c;
+    --no: #d6362e;
+    --choice-fg: #ffffff;
+  }
+  .text-input { background: #191d23; }
+}
