@@ -53,15 +53,26 @@ so it is not recorded.
 
 ## Running order
 
-Reshuffled for every participant, so no two people see the same sequence.
-The two members of a pair are never closer together than `minPairGap`
-(default **12** trials), so nobody sees `ננהל` and `נההל` back to back.
+**Fixed.** Every participant sees the same 125 words in the same sequence, set
+by `order` in `items.js`. It was built to satisfy all of:
 
-The order is built greedily: at each position it picks at random among the
-words whose partner is not among the last `minPairGap` already placed. A greedy
-run can occasionally paint itself into a corner, so it just restarts; if the
-requested gap were ever impossible it relaxes by one and tries again, and a
-plain shuffle is the last resort.
+- trials 1, 2 and 125 are short (4-letter) real words — `ננגן`, `ללכת`, `מקלל`
+- never more than 3 real words, or 3 non-words, in a row
+- the two members of a pair are never closer than 12 trials apart
+  (the tightest gap in this sequence is **16**)
+- as a bonus, never more than 3 trials of the same `condition` in a row
+
+The order is written as plain words rather than indices, so it stays readable.
+On start-up the app checks it against `pairs`: any word that is not in `pairs`,
+listed twice, or missing, stops the test before the first trial and prints what
+is wrong on the welcome screen. It never silently runs a partial list.
+
+The two rest breaks therefore always fall after trials 42 and 84.
+
+To go back to a fresh random order for each participant, set `order: null`.
+The random generator is still in `app.js`: it places trials greedily, picking at
+random among those whose partner is not among the last `minPairGap` already
+placed, restarting when it paints itself into a corner.
 
 The participant is told nothing about the length of the test: no trial counter,
 no progress, no total, and the rest screens carry no numbers either.
@@ -75,15 +86,16 @@ Everything experiment-facing lives in `items.js`:
 - `breakText` — the text on the rest screens
 - `fixationDurationMs` (500; set to `0` to drop the cross),
   `stimulusDurationMs` (**400**) and `blankDurationMs` (500)
-- `minPairGap` (12)
+- `order` — the fixed running order; `null` reverts to a random order per participant
+- `minPairGap` (12) — only used by the random fallback
 - `breakEveryTrials` (**42** → two rest screens; set to `0` to run straight through)
 - `wordLabel` / `nonwordLabel` — the button captions
 - `pairs[]` — each with `id`, `condition`, `word`, `nonword`, and optionally
   `showWord: false` / `showNonword: false` to drop one member from the running
   order while keeping it on record as the partner's `pair_word`
 
-`trial_number` is derived from the running order, so adding, removing or
-reordering pairs needs no other change.
+`trial_number` is derived from position in `order`. Adding or removing a pair
+means updating `order` to match — the app will refuse to start until it does.
 
 ## Behaviour worth knowing
 

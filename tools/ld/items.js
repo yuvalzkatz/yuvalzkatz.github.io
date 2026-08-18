@@ -22,8 +22,8 @@
  *  partner's row.
  *
  *  Every pair contributes two trials, one per member, minus any that are
- *  switched off above. The order is reshuffled for each participant, with the
- *  two members of a pair kept at least `minPairGap` trials apart.
+ *  switched off above. They are presented in the fixed sequence given by
+ *  `order` below -- the same for every participant.
  * ============================================================================
  */
 
@@ -52,7 +52,9 @@ const TEST_DATA = {
      the next word is blankDurationMs + fixationDurationMs. */
   blankDurationMs: 500,
 
-  /* Minimum number of trials between the two members of the same pair. */
+  /* Minimum number of trials between the two members of the same pair.
+     With a fixed `order` below this is only a check; it is what the random
+     fallback order would enforce. */
   minPairGap: 12,
 
   /* Offer a rest screen every N trials. Set to 0 to run straight through. */
@@ -66,6 +68,48 @@ const TEST_DATA = {
   /* Labels on the two response buttons. */
   wordLabel: 'מילה',
   nonwordLabel: 'לא מילה',
+
+  /*
+   *  THE RUNNING ORDER. Fixed: every participant sees exactly this sequence,
+   *  in this order. Built to satisfy, and re-checked by the app on start-up:
+   *    - trials 1, 2 and 125 are short real words
+   *    - never more than 3 real words, or 3 non-words, in a row
+   *    - the two members of a pair are always >= minPairGap trials apart
+   *      (the tightest gap in this sequence is 16)
+   *
+   *  Every string must appear in `pairs` above, and every presented item must
+   *  appear here exactly once. If they disagree the app refuses to start and
+   *  says what is wrong, rather than quietly running a broken test.
+   *
+   *  Set to null to go back to a fresh random order for each participant.
+   */
+  order: [
+    'ננגן',        'ללכת',        'תחחתן',       'התכנסו',      'טופלנה',      /*   1-  5 */
+    'לדדת',        'תתחלפנה',     'תתבצע',       'תתבלבלה',     'ננצל',      /*   6- 10 */
+    'מעעליה',      'לבבלב',       'יתווכחים',    'מטונפים',     'להסתדרם',      /*  11- 15 */
+    'השקתפות',     'יתבשש',       'תתנוצץ',      'נתבוננת',     'תתכונן',      /*  16- 20 */
+    'משלתטים',     'ישננו',       'מושלמים',     'נתחלוה',      'מעולפים',      /*  21- 25 */
+    'מתבטלה',      'לטנוש',       'התעעל',       'הלבינו',      'יבלעו',      /*  26- 30 */
+    'תבבצע',       'ננהל',        'משתוללת',     'הוקשדה',      'נמשעו',      /*  31- 35 */
+    'תתפקע',       'תתחלפונו',    'נשתמע',       'יתווכחו',     'מקקל',      /*  36- 40 */
+    'מחחטים',      'תתחתן',       'יאירתם',      'להתקוטטו',    'נגגן',      /*  41- 45 */
+    'יתבהרו',      'השתעבד',      'נחצום',       'התחנן',       'מטופנים',      /*  46- 50 */
+    'ללבלב',       'מצולעים',     'תטפלנה',      'מלפצתיים',    'צלצלו',      /*  51- 55 */
+    'להתצפל',      'ילמדונים',    'התחנלות',     'נתפלל',       'מבשלים',      /*  56- 60 */
+    'התבלבלה',     'יששנו',       'השתקפות',     'מחטטים',      'התחילה',      /*  61- 65 */
+    'מולשמים',     'יתהברו',      'קטנטן',       'חצויים',      'נההל',      /*  66- 70 */
+    'לככת',        'משתלטים',     'לטטף',        'תתקדמו',      'מעלליה',      /*  71- 75 */
+    'ילמדו',       'מעופלים',     'התנחלות',     'תככונן',      'תשרוקנה',      /*  76- 80 */
+    'ישתבש',       'הוקדשה',      'מרקצים',      'ללדת',        'הכתנסו',      /*  81- 85 */
+    'תבבלבל',      'מצועלים',     'מסתדרים',     'נצצל',        'תפפרע',      /*  86- 90 */
+    'התבטל',       'נתפפל',       'מפלצתיים',    'התקוטט',      'לנטוש',      /*  91- 95 */
+    'נשתוללת',     'עבצניים',     'תפפקע',       'יתבוננו',     'תקקדמו',      /*  96-100 */
+    'קטנטנום',     'ילבעו',       'מאיר',        'ממריץ',       'תקקלקל',      /* 101-105 */
+    'התפרע',       'התעלל',       'מקצרים',      'נשמתע',       'ללטף',      /* 106-110 */
+    'תשרוקתן',     'נשמעו',       'התחחן',       'תננוצץ',      'תתבלבל',      /* 111-115 */
+    'עצבניים',     'תתפרע',       'ישתעבדום',    'להתפצל',      'מתצלצלך',      /* 116-120 */
+    'התלבנון',     'התרפע',       'תתקלקל',      'מרריץ',       'מקלל'      /* 121-125 */
+  ],
 
   pairs: [
     { id:  1, condition: 'transposition',  word: 'מטונפים',  nonword: 'מטופנים'   },

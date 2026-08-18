@@ -34,7 +34,7 @@
 
   const state = {
     participant: '',
-    trials: [],          // the shuffled running order, built at start
+    trials: [],          // the running order for this session, built at start
     trialIndex: 0,
     rows: [],            // every row collected this session (for CSV)
     pending: [],         // rows that have not been accepted by the server
@@ -67,6 +67,44 @@
       }
     });
     return trials;
+  }
+
+  /* The running order. Normally the fixed sequence in TEST_DATA.order; if that
+     is absent, a fresh random order is generated for this participant instead.
+
+     The fixed order is given as plain words, so it stays readable and editable
+     in items.js. Every word must resolve to exactly one item, and every item
+     must be listed exactly once — anything else is a mistake in the data file
+     that would silently run a wrong test, so it raises instead. */
+  function runningOrder() {
+    const trials = buildTrials();
+    const list = TEST_DATA.order;
+
+    if (!Array.isArray(list) || list.length === 0) {
+      return orderTrials(trials, TEST_DATA.minPairGap || 1, 200);
+    }
+
+    const byWord = {};
+    trials.forEach((t) => { byWord[t.word] = t; });
+
+    const unknown = list.filter((w) => !byWord[w]);
+    if (unknown.length) {
+      throw new Error('items.js: order lists words that are not in pairs: ' + unknown.join(', '));
+    }
+
+    const counts = {};
+    list.forEach((w) => { counts[w] = (counts[w] || 0) + 1; });
+    const repeated = Object.keys(counts).filter((w) => counts[w] > 1);
+    if (repeated.length) {
+      throw new Error('items.js: order repeats: ' + repeated.join(', '));
+    }
+
+    const missing = trials.filter((t) => counts[t.word] === undefined).map((t) => t.word);
+    if (missing.length) {
+      throw new Error('items.js: order is missing: ' + missing.join(', '));
+    }
+
+    return list.map((w) => byWord[w]);
   }
 
   function shuffle(list) {
@@ -275,7 +313,15 @@
     $('name-error').hidden = true;
     state.participant = name;
     state.testRunning = true;
-    state.trials = orderTrials(buildTrials(), TEST_DATA.minPairGap || 1, 200);
+    try {
+      state.trials = runningOrder();
+    } catch (err) {
+      // A broken data file must never reach a participant unnoticed.
+      $('name-error').textContent = String(err.message || err);
+      $('name-error').hidden = false;
+      state.testRunning = false;
+      throw err;
+    }
     lockNavigation();
     $('general-instructions').textContent = TEST_DATA.generalInstructions;
     $('btn-word').textContent = TEST_DATA.wordLabel;
